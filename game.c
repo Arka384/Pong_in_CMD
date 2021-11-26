@@ -5,13 +5,12 @@
 
 typedef struct ball{
 	int x, y;
-	int dx, dy;
+	float dx, dy;
 }ball;
 typedef struct paddle{
 	int x,y;
 	int dy;
 	int size;
-	int score;
 }paddle;
 const int width = 30;
 const int height = 70;
@@ -21,7 +20,7 @@ void init(ball *, paddle *);
 void ballUpdate(ball *b, int *);
 void paddleUpdate(paddle *);
 int getCollision(ball , paddle *);
-void onCollisionUpdate(ball *, paddle *, int );
+void onCollisionUpdate(ball *);
 
 int main()
 {
@@ -54,33 +53,37 @@ int main()
 	///////////////////////////////////////////////
 	ball b;
 	paddle p[2];
-	int gameOver = 0, CollisionCode = 0;
+	int gameOver = 0, CollisionCode = 0, prevScore = 0;
 	init(&b, p);
 
 	printf("Press Any Key To Start PONG\n");
 	getch();
-
 
 	while(gameOver == 0)
 	{
 		system("cls");
 
 		ballUpdate(&b, &gameOver);
-
+		paddleUpdate(p);
 		CollisionCode = getCollision(b, p);
 		if(CollisionCode != -1)
-			onCollisionUpdate(&b, p, CollisionCode);
-		
-		paddleUpdate(p);
+			onCollisionUpdate(&b);
+
 		Sleep(20);
+
+		if(gameOver == 1){
+			gotoxy(height/2 - 4, width/2 - 2);
+			printf("OOPS");
+			gotoxy(height/2 - 8, width/2);
+			if(b.dx > 0)
+				printf("Player 1 WON");
+			else
+				printf("Player 2 WON");
+		}
 	}
 
-	Sleep(1500);
-	system("cls");
-	printf("That was a good game");
-	printf("\nPlayer 0 scored: %d", p[0].score);
-	printf("\nPlayer 1 scored: %d", p[1].score);
-
+	getch();
+	
 	hIn = GetStdHandle(STD_INPUT_HANDLE);
 	GetConsoleMode(hIn, &previous_mode);
 	SetConsoleMode(hIn, ENABLE_EXTENDED_FLAGS|(previous_mode & ~ENABLE_QUICK_EDIT_MODE));
@@ -101,13 +104,9 @@ int getCollision(ball b, paddle *p)
 	return -1;
 }
 
-void onCollisionUpdate(ball *b, paddle *p, int CollisionCode)
+void onCollisionUpdate(ball *b)
 {
 	b->dx = -b->dx;
-	if(CollisionCode == 0)
-		p[0].score++;
-	else if(CollisionCode == 1)
-		p[1].score++;
 }
 
 void paddleUpdate(paddle *p)
@@ -115,7 +114,6 @@ void paddleUpdate(paddle *p)
 	char c;
 	if(kbhit())
 		c = getch();
-
 	switch (c)
 	{
 	case 'w':
@@ -158,9 +156,11 @@ void ballUpdate(ball *b, int *gameover)
 
 	if(b->x < 0){
 		*gameover = 1;
+		return;
 	}	
 	else if (b->x > height-1){
 		*gameover = 1;
+		return;
 	}
 	if(b->y < 0){
 		b->y = 0;
@@ -171,17 +171,16 @@ void ballUpdate(ball *b, int *gameover)
 		b->dy = -b->dy;
 	}
 
-
 	gotoxy(b->x,b->y);
 		printf("O");	
 }
 
 void init(ball *b, paddle *p)
 {
-	b->x = rand()%(height-1);
-	b->y = rand()%(width-1);
-	b->dx = (1 + rand()%2/5) * (rand()%2 == 0 ? -1 : 1);
-	b->dy = (1 + rand()%2/5) * (rand()%2 == 0 ? -1 : 1);
+	b->x = height/2;
+	b->y = width/2;
+	b->dx = (1 + rand()%8/5) * (rand()%2 == 0 ? -1 : 1);
+	b->dy = (1 + rand()%8/5) * (rand()%2 == 0 ? -1 : 1);
 
 	int i=0;
 	for(i=0;i<2;i++)
@@ -189,7 +188,6 @@ void init(ball *b, paddle *p)
 		p[i].size = 6;
 		p[i].x = i*(height-10) + 5;
 		p[i].y = 0;
-		p[i].score = 0;
 	}
 }
 
